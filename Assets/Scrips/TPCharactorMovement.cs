@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -68,7 +68,7 @@ public class TPCharactorMovement : MonoBehaviour
             curInputDirection.y = 0;
             //Debug.Log(curInputDirection);
         }
-            
+
         Vector3 curMeshDir = charactorMesh.transform.forward;
         curMeshDir.y = 0;
         float deltaAngle = Vector3.Angle(curMeshDir, curInputDirection);
