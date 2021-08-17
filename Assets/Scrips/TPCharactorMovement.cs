@@ -9,6 +9,7 @@ public class TPCharactorMovement : MonoBehaviour
         gameObj = this.gameObject;
         chaController = gameObj.GetComponent<CharacterController>();
         Debug.Assert(chaController, "Can not find Component of type \"CharacterController\" in this GameObject");
+        currentPosition = gameObj.transform.position;
 
         objTransform = gameObj.transform;
         tpCamera = GameObject.Find("TPCamera");
@@ -23,8 +24,14 @@ public class TPCharactorMovement : MonoBehaviour
         UpdateMovement();
         UpdateJump();
         UpdateRotation();
-
+        //Debug.Log(chaController.isGrounded);
     }
+
+    void FixedUpdate()
+    {
+        UpdateGravity();
+    }
+
 
     void UpdateMovement()
     {
@@ -78,11 +85,14 @@ public class TPCharactorMovement : MonoBehaviour
 
     private void UpdateGravity()
     {
-        Vector3 gravityAccel = new Vector3(0, -9.8f, 0);
-        Vector3 nextVelocity = chaController.velocity + gravityAccel * Time.deltaTime;
-        chaController.Move(nextVelocity * Time.deltaTime);
-
-
+        float deltaYPos = gameObj.transform.position.y - currentPosition.y;
+        currentPosition = gameObj.transform.position;
+       
+        currentYSpeed = deltaYPos / Time.deltaTime;
+        float gravityAccel = -9.8f;
+        float nextYSpeed = currentYSpeed + gravityAccel * Time.deltaTime;
+        chaController.Move(new Vector3(0, nextYSpeed * Time.deltaTime, 0));
+        Debug.Log(nextYSpeed);
     }
 
     private CharacterController chaController;
@@ -92,6 +102,8 @@ public class TPCharactorMovement : MonoBehaviour
     private GameObject charactorMesh;
     private Vector3 curInputDirection;
     private float rotationLerpSpeed = 30f;
+    private Vector3 currentPosition;
+    private float currentYSpeed = 0f;
 
     public float movementSpeed = 15f;
 
