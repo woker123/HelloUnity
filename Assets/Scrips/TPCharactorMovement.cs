@@ -11,7 +11,10 @@ public class TPCharactorMovement : MonoBehaviour
         chaController = gameObj.GetComponent<CharacterController>();
         objTransform = gameObj.transform;
         tpCamera = GameObject.Find("TPCamera");
+        Debug.Assert(tpCamera, "Can not find GameOjbect named \"TPCamera\"");
+
         charactorMesh = GameObject.Find("BasicMotionsDummy");
+        Debug.Assert(charactorMesh, "Can not find GameOjbect named \"BasicMotionsDummy\"");
     }
     // Update is called once per frame
     void Update()

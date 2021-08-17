@@ -10,6 +10,8 @@ public class TPCameraRotation : MonoBehaviour
         tpCameraOrigin = this.gameObject;
         tpCamera = GameObject.Find("TPCamera");
         cameraArmLength = (tpCameraOrigin.transform.position - tpCamera.transform.position).magnitude;
+        
+        Debug.Assert(tpCamera, "Can not find GameObject named \"TPCamera\"");
     }
 
     // Update is called once per frame
@@ -67,9 +69,7 @@ public class TPCameraRotation : MonoBehaviour
 
                 float hitDistance = hitResult.distance < cameraArmLength ? (hitResult.distance - directBias) : cameraArmLength;
                 tpCamera.transform.position = tpCameraOrigin.transform.position + ray.direction * hitDistance;
-                Debug.Log(directBias);
             }
-            
         }
     }
 
