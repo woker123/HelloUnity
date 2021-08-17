@@ -17,6 +17,7 @@ function update()
 	local r = CS.UnityEngine.Vector3.up * CS.UnityEngine.Time.deltaTime * speed
 	self.transform:Rotate(r)
 	lightCpnt.color = CS.UnityEngine.Color(CS.UnityEngine.Mathf.Sin(CS.UnityEngine.Time.time) / 2 + 0.5, 0, 0, 1)
+	lightCpnt.color = CS.UnityEngine.Color(0.0, 1.0, 0.0);
 end
 
 function ondestroy()
