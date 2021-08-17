@@ -1,14 +1,15 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class TPCharactorMovement : MonoBehaviour
 {
-    
     void Start()
     {
         gameObj = this.gameObject;
         chaController = gameObj.GetComponent<CharacterController>();
+        Debug.Assert(chaController, "Can not find Component of type \"CharacterController\" in this GameObject");
+
         objTransform = gameObj.transform;
         tpCamera = GameObject.Find("TPCamera");
         Debug.Assert(tpCamera, "Can not find GameOjbect named \"TPCamera\"");
@@ -25,10 +26,9 @@ public class TPCharactorMovement : MonoBehaviour
 
     }
 
-
     void UpdateMovement()
-    {          
-        if(chaController && tpCamera)
+    {
+        if (chaController && tpCamera)
         {
             //Player Game Object移动
             Vector2 movementKeyState = new Vector2(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical"));
@@ -42,14 +42,13 @@ public class TPCharactorMovement : MonoBehaviour
             forwardVec = Vector3.Normalize(forwardVec);
 
             Vector3 movementValue = movementKeyState.x * rightVec + movementKeyState.y * forwardVec;
-            chaController.Move(movementValue * movementSpeed * deltaTime);   
-
+            chaController.Move(movementValue * movementSpeed * deltaTime);
 
             //up down movement
             float moveUpSpeed = 10f;
-            if(Input.GetKey(KeyCode.E))
+            if (Input.GetKey(KeyCode.E))
                 chaController.Move(new Vector3(0, moveUpSpeed * Time.deltaTime, 0));
-            if(Input.GetKey(KeyCode.Q))
+            if (Input.GetKey(KeyCode.Q))
                 chaController.Move(new Vector3(0, -moveUpSpeed * Time.deltaTime, 0));
         }
     }
@@ -61,21 +60,29 @@ public class TPCharactorMovement : MonoBehaviour
     private void UpdateRotation()
     {
         Vector3 inputDirection = new Vector3(Input.GetAxis("Horizontal"), 0, Input.GetAxis("Vertical"));
-        if(inputDirection.magnitude > Mathf.Epsilon)
+        if (inputDirection.magnitude > Mathf.Epsilon)
         {
             Matrix4x4 localToWorld = tpCamera.transform.localToWorldMatrix;
             curInputDirection = localToWorld * inputDirection;
             curInputDirection.y = 0;
-            //Debug.Log(curInputDirection);
         }
 
         Vector3 curMeshDir = charactorMesh.transform.forward;
         curMeshDir.y = 0;
         float deltaAngle = Vector3.Angle(curMeshDir, curInputDirection);
         Vector3 crossVec = Vector3.Cross(curInputDirection, curMeshDir);
-        if(crossVec.y > 0)
+        if (crossVec.y > 0)
             deltaAngle = -deltaAngle;
         charactorMesh.transform.Rotate(new Vector3(0, deltaAngle * Time.deltaTime * rotationLerpSpeed, 0));
+    }
+
+    private void UpdateGravity()
+    {
+        Vector3 gravityAccel = new Vector3(0, -9.8f, 0);
+        Vector3 nextVelocity = chaController.velocity + gravityAccel * Time.deltaTime;
+        chaController.Move(nextVelocity * Time.deltaTime);
+
+
     }
 
     private CharacterController chaController;
