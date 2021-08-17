@@ -92,7 +92,6 @@ public class TPCharactorMovement : MonoBehaviour
         float gravityAccel = -9.8f;
         float nextYSpeed = currentYSpeed + gravityAccel * Time.deltaTime;
         chaController.Move(new Vector3(0, nextYSpeed * Time.deltaTime, 0));
-        Debug.Log(nextYSpeed);
     }
 
     private CharacterController chaController;
