@@ -1,0 +1,15 @@
+
+
+function awake()
+
+end
+
+function start()
+end
+
+function update()
+    print("hello")
+end
+
+function ondestroy()
+end
