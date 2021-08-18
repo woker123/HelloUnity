@@ -8,10 +8,10 @@ public class TPCameraRotation : MonoBehaviour
     void Start()
     {
         tpCameraOrigin = this.gameObject;
-        tpCamera = GameObject.Find("TPCamera");
+        tpCamera = GameObject.Find("TPCameraPivot");
         cameraArmLength = (tpCameraOrigin.transform.position - tpCamera.transform.position).magnitude;
         
-        Debug.Assert(tpCamera, "Can not find GameObject named \"TPCamera\"");
+        Debug.Assert(tpCamera, "Can not find GameObject named \"TPCameraPivot\"");
     }
 
     // Update is called once per frame

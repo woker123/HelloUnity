@@ -51,12 +51,12 @@ public class TPCharactorMovement : MonoBehaviour
             Vector3 movementValue = movementKeyState.x * rightVec + movementKeyState.y * forwardVec;
             chaController.Move(movementValue * movementSpeed * deltaTime);
 
-            //up down movement
-            float moveUpSpeed = 10f;
-            if (Input.GetKey(KeyCode.E))
-                chaController.Move(new Vector3(0, moveUpSpeed * Time.deltaTime, 0));
-            if (Input.GetKey(KeyCode.Q))
-                chaController.Move(new Vector3(0, -moveUpSpeed * Time.deltaTime, 0));
+            // //up down movement
+            // float moveUpSpeed = 10f;
+            // if (Input.GetKey(KeyCode.E))
+            //     chaController.Move(new Vector3(0, moveUpSpeed * Time.deltaTime, 0));
+            // if (Input.GetKey(KeyCode.Q))
+            //     chaController.Move(new Vector3(0, -moveUpSpeed * Time.deltaTime, 0));
         }
     }
 

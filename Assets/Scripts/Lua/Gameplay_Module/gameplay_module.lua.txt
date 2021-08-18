@@ -1,0 +1,30 @@
+gameplay_module = {}
+
+--another name of unity classes
+UnityEngine = CS.UnityEngine
+Debug = CS.UnityEngine.Debug
+
+gameObjs = {}
+
+local function findGameObjects()
+    gameObjs.tpCharactor = CS.UnityEngine.GameObject.Find("TPCharactor")
+    gameObjs.tpCameraPivot = CS.UnityEngine.GameObject.Find("TPCameraPivot")
+end
+
+--awake
+function gameplay_module:awake()
+    findGameObjects()
+end
+
+--start
+function gameplay_module:start()
+end
+
+--update
+function gameplay_module:update()
+end
+
+--ondestroy
+function gameplay_module:ondestroy()
+end
+

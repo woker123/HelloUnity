@@ -38,7 +38,6 @@ public class LuaStartup : MonoBehaviour
         {
             luaAwake();
         }
-
     }
 
     void Start()

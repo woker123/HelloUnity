@@ -1,15 +1,24 @@
+function set_data_path()
+    assetPath = CS.UnityEngine.Application.dataPath
+    package.path = package.path..';'..assetPath.."\\Scripts\\Lua\\Gameplay_Module\\?.lua.txt"
+end
+set_data_path()
 
+require "gameplay_module"
 
 function awake()
-
+    set_data_path()
+    gameplay_module:awake()
 end
 
 function start()
+    gameplay_module:start()
 end
 
 function update()
-    print("hello")
+    gameplay_module:update()
 end
 
 function ondestroy()
+    gameplay_module:ondestroy()
 end
