@@ -1,13 +1,24 @@
-function set_data_path()
-    assetPath = CS.UnityEngine.Application.dataPath
-    package.path = package.path..';'..assetPath.."\\Scripts\\Lua\\Gameplay_Module\\?.lua.txt"
+--------------------------------------------Set pachage data paths-------------------------------------
+local function add_package_paths()
+    local paths = {}
+    paths[1] = "\\Scripts\\Lua\\Gameplay_Module\\?.lua.txt"
+    return paths
+end
+
+local function set_data_path()
+    local paths = add_package_paths()
+    local assetPath = CS.UnityEngine.Application.dataPath
+    --package.path = package.path..';'..assetPath.."\\Scripts\\Lua\\Gameplay_Module\\?.lua.txt"
+    for i, v in ipairs(paths) do
+        package.path = package.path..';'..assetPath..v
+    end
 end
 set_data_path()
+-------------------------------------------------------------------------------------------------------
 
 require "gameplay_module"
 
 function awake()
-    set_data_path()
     gameplay_module:awake()
 end
 

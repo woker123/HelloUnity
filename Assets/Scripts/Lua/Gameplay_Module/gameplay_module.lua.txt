@@ -1,30 +1,52 @@
 gameplay_module = {}
 
---another name of unity classes
-UnityEngine = CS.UnityEngine
-Debug = CS.UnityEngine.Debug
+require "tpcontroller"
 
-gameObjs = {}
+--another name of unity classes
+local UnityEngine = CS.UnityEngine
+local Debug = UnityEngine.Debug
+local GameObject = UnityEngine.GameObject
+local LogError = Debug.LogError
+local Log = Debug.Log
+
+local gameObjs = {}
+local tpChController = {}
 
 local function findGameObjects()
     gameObjs.tpCharactor = CS.UnityEngine.GameObject.Find("TPCharactor")
+    if gameObjs == nil then
+        LogError("can not find GameOjbect: ".."\"TPCharactor\"")
+    end
+
     gameObjs.tpCameraPivot = CS.UnityEngine.GameObject.Find("TPCameraPivot")
+    if gameObjs == nil then
+        LogError("can not find GameOjbect: ".."\"TPCameraPivot\"")
+    end
+
+    gameObjs.tpCamera = CS.UnityEngine.GameObject.Find("TPCamera")
+    if gameObjs == nil then
+        LogError("can not find GameOjbect: ".."\"TPCamera\"")
+    end
 end
 
 --awake
 function gameplay_module:awake()
     findGameObjects()
+    tpChController = TPChController:new(gameObjs.tpCharactor, gameObjs.tpCameraPivot, gameObjs.tpCamera)
 end
 
 --start
 function gameplay_module:start()
+    tpChController:start()
 end
 
 --update
 function gameplay_module:update()
+    tpChController:update()
 end
 
 --ondestroy
 function gameplay_module:ondestroy()
+    tpChController:destroy()
 end
 
