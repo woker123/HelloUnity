@@ -7,9 +7,9 @@ public class TPCameraRotation : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        tpCameraOrigin = this.gameObject;
-        tpCamera = GameObject.Find("TPCameraPivot");
-        cameraArmLength = (tpCameraOrigin.transform.position - tpCamera.transform.position).magnitude;
+        tpCameraPivot = this.gameObject;
+        tpCamera = GameObject.Find("TPCamera");
+        cameraArmLength = (tpCameraPivot.transform.position - tpCamera.transform.position).magnitude;
         
         Debug.Assert(tpCamera, "Can not find GameObject named \"TPCameraPivot\"");
     }
@@ -23,25 +23,25 @@ public class TPCameraRotation : MonoBehaviour
 
     void TurnRight(float angle)
     {
-        tpCameraOrigin.transform.Rotate(0, angle, 0, Space.World);   
+        tpCameraPivot.transform.Rotate(0, angle, 0, Space.World);   
     }
 
     void TurnUp(float angle)
     {
         float upLimit = 300;
         float downLimit = 90;
-        float currentAngle = tpCameraOrigin.transform.eulerAngles.x;
+        float currentAngle = tpCameraPivot.transform.eulerAngles.x;
         
         float nextAngle = currentAngle + angle;
         if(nextAngle < downLimit || nextAngle > upLimit)
-            tpCameraOrigin.transform.Rotate(angle, 0, 0, Space.Self);
+            tpCameraPivot.transform.Rotate(angle, 0, 0, Space.Self);
     }
 
     void UpdateRotation()
     {
         if(Input.GetKey(KeyCode.Mouse1))
         {
-            if(tpCameraOrigin)
+            if(tpCameraPivot)
             {
                 mouseSpeed = new Vector2(Input.GetAxis("Mouse X"), Input.GetAxis("Mouse Y"));
                 TurnUp(-mouseSpeed.y * turnSpeed * Time.deltaTime);
@@ -52,9 +52,9 @@ public class TPCameraRotation : MonoBehaviour
 
     void UpdateCollisionBias()
     {
-        if(tpCameraOrigin && tpCamera)
+        if(tpCameraPivot && tpCamera)
         {
-            Ray ray = new Ray(tpCameraOrigin.transform.position, tpCamera.transform.position - tpCameraOrigin.transform.position);
+            Ray ray = new Ray(tpCameraPivot.transform.position, tpCamera.transform.position - tpCameraPivot.transform.position);
             RaycastHit hitResult;
             bool isCollided = Physics.Raycast(ray, out hitResult, Mathf.Infinity);
             if(isCollided && hitResult.collider.name != "TPCharactor")
@@ -68,12 +68,12 @@ public class TPCameraRotation : MonoBehaviour
                     directBias = verticalBias / Mathf.Cos(Mathf.Deg2Rad * angle);
 
                 float hitDistance = hitResult.distance < cameraArmLength ? (hitResult.distance - directBias) : cameraArmLength;
-                tpCamera.transform.position = tpCameraOrigin.transform.position + ray.direction * hitDistance;
+                tpCamera.transform.position = tpCameraPivot.transform.position + ray.direction * hitDistance;
             }
         }
     }
 
-    private GameObject tpCameraOrigin;
+    private GameObject tpCameraPivot;
     private GameObject tpCamera;
     private Vector2 mouseSpeed;
     private float cameraArmLength = 0f;

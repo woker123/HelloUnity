@@ -6,14 +6,13 @@ public class TPCharactorMovement : MonoBehaviour
 {
     void Start()
     {
-        gameObj = this.gameObject;
-        chaController = gameObj.GetComponent<CharacterController>();
-        Debug.Assert(chaController, "Can not find Component of type \"CharacterController\" in this GameObject");
-        currentPosition = gameObj.transform.position;
+        tpCharactor = this.gameObject;
+        moveController = tpCharactor.GetComponent<CharacterController>();
+        Debug.Assert(moveController, "Can not find Component of type \"CharacterController\" in this GameObject");
+        currentPosition = tpCharactor.transform.position;
 
-        objTransform = gameObj.transform;
-        tpCamera = GameObject.Find("TPCamera");
-        Debug.Assert(tpCamera, "Can not find GameOjbect named \"TPCamera\"");
+        tpCameraPivot = GameObject.Find("TPCameraPivot");
+        Debug.Assert(tpCameraPivot, "Can not find GameOjbect named \"TPCameraPivot\"");
 
         charactorMesh = GameObject.Find("BasicMotionsDummy");
         Debug.Assert(charactorMesh, "Can not find GameOjbect named \"BasicMotionsDummy\"");
@@ -22,7 +21,6 @@ public class TPCharactorMovement : MonoBehaviour
     void Update()
     {
         UpdateMovement();
-        UpdateJump();
         UpdateRotation();
         //Debug.Log(chaController.isGrounded);
     }
@@ -35,21 +33,21 @@ public class TPCharactorMovement : MonoBehaviour
 
     void UpdateMovement()
     {
-        if (chaController && tpCamera)
+        if (moveController && tpCameraPivot)
         {
             //Player Game Object移动
             Vector2 movementKeyState = new Vector2(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical"));
             float deltaTime = Time.deltaTime;
-            Vector3 rightVec = tpCamera.transform.right;
+            Vector3 rightVec = tpCameraPivot.transform.right;
             rightVec.y = 0;
             rightVec = Vector3.Normalize(rightVec);
 
-            Vector3 forwardVec = tpCamera.transform.forward;
+            Vector3 forwardVec = tpCameraPivot.transform.forward;
             forwardVec.y = 0;
             forwardVec = Vector3.Normalize(forwardVec);
 
             Vector3 movementValue = movementKeyState.x * rightVec + movementKeyState.y * forwardVec;
-            chaController.Move(movementValue * movementSpeed * deltaTime);
+            moveController.Move(movementValue * movementSpeed * deltaTime);
 
             // //up down movement
             // float moveUpSpeed = 10f;
@@ -69,7 +67,7 @@ public class TPCharactorMovement : MonoBehaviour
         Vector3 inputDirection = new Vector3(Input.GetAxis("Horizontal"), 0, Input.GetAxis("Vertical"));
         if (inputDirection.magnitude > Mathf.Epsilon)
         {
-            Matrix4x4 localToWorld = tpCamera.transform.localToWorldMatrix;
+            Matrix4x4 localToWorld = tpCameraPivot.transform.localToWorldMatrix;
             curInputDirection = localToWorld * inputDirection;
             curInputDirection.y = 0;
         }
@@ -85,19 +83,18 @@ public class TPCharactorMovement : MonoBehaviour
 
     private void UpdateGravity()
     {
-        float deltaYPos = gameObj.transform.position.y - currentPosition.y;
-        currentPosition = gameObj.transform.position;
+        float deltaYPos = tpCharactor.transform.position.y - currentPosition.y;
+        currentPosition = tpCharactor.transform.position;
        
         currentYSpeed = deltaYPos / Time.deltaTime;
         float gravityAccel = -9.8f;
         float nextYSpeed = currentYSpeed + gravityAccel * Time.deltaTime;
-        chaController.Move(new Vector3(0, nextYSpeed * Time.deltaTime, 0));
+        moveController.Move(new Vector3(0, nextYSpeed * Time.deltaTime, 0));
     }
 
-    private CharacterController chaController;
-    private GameObject gameObj;
-    private Transform objTransform;
-    private GameObject tpCamera;
+    private CharacterController moveController;
+    private GameObject tpCharactor;
+    private GameObject tpCameraPivot;
     private GameObject charactorMesh;
     private Vector3 curInputDirection;
     private float rotationLerpSpeed = 30f;

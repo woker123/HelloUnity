@@ -1,0 +1,98 @@
+-------------------------------对象的别名-----------------------------------
+local UnityEngine = CS.UnityEngine
+local Debug = CS.UnityEngine.Debug
+local Log = Debug.Log
+local LogError = Debug.LogError
+local Vector3 = UnityEngine.Vector3
+local GameObject = UnityEngine.GameObject
+local Time = UnityEngine.Time
+local Input = UnityEngine.Input
+local Vector2 = UnityEngine.Vector2
+local Mathf = UnityEngine.Mathf
+---------------------------------------------------------------------------
+
+
+--------------------------------模块接口------------------------------------
+TPChController = {
+    tpCharacter = nil,
+    tpCameraPivot = nil,
+    tpCamera = nil,
+    characterMesh = nil,
+    moveController = nil,
+    curInputDirection = Vector3(),
+    rotationLerpSpeed = 30.0,
+    currentPosition = Vector3(),
+    currentYSpeed = 0.0,
+    movementSpeed = 15.0,
+}
+TPChController.__index = TPChController
+-----------------------------------------------------------------------------
+
+
+---------------------------------Private成员函数------------------------------
+function TPChController:update_movement()
+    if self.moveController ~= nil and self.tpCameraPivot ~= nil then
+        local movementKeyState = Vector2(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical"))
+        local deltaTime = Time.deltaTime
+        local rightVec = self.tpCharacter.transform.right
+        rightVec.y = 0.0
+        rightVec = Vector3.Normalize(rightVec)
+
+        local forwardVec = self.tpCameraPivot.transform.forward
+        forwardVec.y = 0
+        forwardVec = Vector3.Normalize(forwardVec)
+
+        local movementValue = rightVec * movementKeyState.x + forwardVec * movementKeyState.y
+        self.moveController:Move(movementValue * self.movementSpeed * deltaTime)
+    end
+end
+
+function TPChController:update_rotation()
+    local inputDirection = Vector3(Input.GetAxis("Horizontal"), 0, Input.GetAxis("Vertical"))
+    if inputDirection.magnitude > Mathf.Epsilon then
+        local localToWorld = self.tpCameraPivot.transform.localToWorldMatrix
+        self.curInputDirection = localToWorld:MultiplyVector(inputDirection)
+        self.curInputDirection.y = 0
+    end
+
+    local curMeshDir = self.characterMesh.transform.forward
+    curMeshDir.y = 0
+    local deltaAngle = Vector3.Angle(curMeshDir, self.curInputDirection)
+    local crossVec = Vector3.Cross(self.curInputDirection, curMeshDir)
+    if crossVec.y > 0 then
+        deltaAngle = -deltaAngle
+    end
+    self.characterMesh.transform:Rotate(Vector3(0, deltaAngle * Time.deltaTime * self.rotationLerpSpeed, 0))
+end
+
+-----------------------------------------------------------------------------
+
+-------------------------------Public成员函数-------------------------------
+function TPChController:new(tpCharacter, tpCameraPivot, tpCamera, tpChMesh)
+    local result = {}
+    result.tpCharacter = tpCharacter
+    result.tpCameraPivot = tpCameraPivot
+    result.tpCamera = tpCamera
+    result.characterMesh = tpChMesh
+    result.moveController = tpCharacter:GetComponent(typeof(UnityEngine.CharacterController))
+    result.curInputDirection = Vector3()
+    result.rotationLerpSpeed = 30.0
+    result.currentPosition = tpCharacter.transform.position
+    result.currentYSpeed = 0.0
+    result.movementSpeed = 15.0
+    setmetatable(result, self)
+    return result
+end
+
+function TPChController:start()
+
+end
+
+function TPChController:update()
+    self:update_movement()
+    self:update_rotation()
+end
+
+function TPChController:destroy()
+
+end
