@@ -1,0 +1,105 @@
+--------------------------------Unity对象别名-----------------------------
+local UnityEngine = CS.UnityEngine
+local Debug = CS.UnityEngine.Debug
+local Log = Debug.Log
+local LogError = Debug.LogError
+local Vector3 = UnityEngine.Vector3
+local GameObject = UnityEngine.GameObject
+local Time = UnityEngine.Time
+local Input = UnityEngine.Input
+local Vector2 = UnityEngine.Vector2
+local Mathf = UnityEngine.Mathf
+---------------------------------------------------------------------------
+
+--------------------------------公共接口----------------------------------
+TPCameraController = {
+    tpCameraPivot = nil,
+    tpCamera = nil,
+    mouseSpeed = Vector2(),
+    cameraArmLength = 0.0,
+    turnSpeed = 1500.0
+}
+TPCameraController.__index = TPCameraController
+
+-----------------------------------Private成员函数--------------------------
+function TPCameraController:turn_right(angle)
+    self.tpCameraPivot.transform:Rotate(0, angle, 0, UnityEngine.Space.World)
+end
+
+function TPCameraController:turn_up(angle)
+    local upLimit = 300.0
+    local downLimit = 90.0
+    local currentAngle = self.tpCameraPivot.transform.eulerAngles.x
+
+    local nextAngle = currentAngle + angle
+    if nextAngle < downLimit or nextAngle > upLimit then
+        self.tpCameraPivot.transform:Rotate(angle, 0.0, 0.0, UnityEngine.Space.Self)
+    end
+end
+
+function TPCameraController:update_rotation()
+    if Input.GetKey(UnityEngine.KeyCode.Mouse1) then
+        if self.tpCameraPivot ~= nil then
+            self.mouseSpeed = Vector2(Input.GetAxis("Mouse X"), Input.GetAxis("Mouse Y"))
+            self:turn_up(-self.mouseSpeed.y * self.turnSpeed * Time.deltaTime)
+            self:turn_right(self.mouseSpeed.x * self.turnSpeed * Time.deltaTime)
+        end
+    end
+end
+
+--未完成Raycast函数无法正确调用
+function TPCameraController:update_collision_bias()
+    if self.tpCameraPivot ~= nil and self.tpCamera ~= nil then
+        local ray = UnityEngine.Ray(self.tpCameraPivot.transform.position,
+                self.tpCamera.transform.position - self.tpCameraPivot.transform.position)
+        local isCollided, hitResult = UnityEngine.Physics.Raycast(ray, nil, Mathf.Infinity)
+        Log(isCollided)
+        if isCollided and hitResult.collider.name ~= "TPCharacter" then
+            local angle = Vector3.Angle(hitResult.normal, -ray.direction)
+            local verticalBias = 0.1
+            local directBias = 0.0
+            if Mathf.Approximately(angle, 90.0) then
+                directBias = verticalBias
+            else
+                directBias = verticalBias / Mathf.Cos(Mathf.Deg2Rad * angle)
+            end
+            
+            local hitDistance = 0.0
+            if hitResult.distance < self.cameraArmLength then
+                hitDistance = hitResult.distance - directBias
+            else
+                hitDistance = self.cameraArmLength
+            end
+            self.tpCamera.transform.position = self.tpCameraPivot.transform.position + 
+                ray.direction * hitDistance
+        end
+    end
+end
+-----------------------------------------------------------------------------
+
+----------------------------------Public成员函数------------------------------
+function TPCameraController:new(tpCameraPivot, tpCamera)
+    local result = {}
+    result.tpCameraPivot = tpCameraPivot
+    result.tpCamera = tpCamera
+    result.mouseSpeed = TPCameraController.mouseSpeed
+    result.cameraArmLength = (tpCameraPivot.transform.position - tpCamera.transform.position).magnitude
+    result.turnSpeed = TPCameraController.turnSpeed
+    setmetatable(result, self)
+    return result
+end
+
+function TPCameraController:start()
+end
+
+function TPCameraController:update()
+    self:update_rotation()
+    --Camera bias未完成
+    --self:update_collision_bias()
+end
+
+function TPCameraController:destroy()
+end
+-----------------------------------------------------------------------------
+
+

@@ -1,4 +1,4 @@
--------------------------------对象的别名-----------------------------------
+--------------------------------Unity对象别名---------------------------------
 local UnityEngine = CS.UnityEngine
 local Debug = CS.UnityEngine.Debug
 local Log = Debug.Log
@@ -11,6 +11,7 @@ local Vector2 = UnityEngine.Vector2
 local Mathf = UnityEngine.Mathf
 ---------------------------------------------------------------------------
 
+require "tp_camera_controller"
 
 --------------------------------模块接口------------------------------------
 TPChController = {
@@ -24,6 +25,7 @@ TPChController = {
     currentPosition = Vector3(),
     currentYSpeed = 0.0,
     movementSpeed = 15.0,
+    cameraController = nil
 }
 TPChController.__index = TPChController
 -----------------------------------------------------------------------------
@@ -34,7 +36,7 @@ function TPChController:update_movement()
     if self.moveController ~= nil and self.tpCameraPivot ~= nil then
         local movementKeyState = Vector2(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical"))
         local deltaTime = Time.deltaTime
-        local rightVec = self.tpCharacter.transform.right
+        local rightVec = self.tpCameraPivot.transform.right
         rightVec.y = 0.0
         rightVec = Vector3.Normalize(rightVec)
 
@@ -75,24 +77,32 @@ function TPChController:new(tpCharacter, tpCameraPivot, tpCamera, tpChMesh)
     result.tpCamera = tpCamera
     result.characterMesh = tpChMesh
     result.moveController = tpCharacter:GetComponent(typeof(UnityEngine.CharacterController))
-    result.curInputDirection = Vector3()
-    result.rotationLerpSpeed = 30.0
+    result.curInputDirection = TPChController.curInputDirection
+    result.rotationLerpSpeed = TPChController.rotationLerpSpeed
     result.currentPosition = tpCharacter.transform.position
-    result.currentYSpeed = 0.0
-    result.movementSpeed = 15.0
+    result.currentYSpeed = TPChController.currentYSpeed
+    result.movementSpeed = TPChController.movementSpeed
+    result.cameraController = TPCameraController:new(result.tpCameraPivot, result.tpCamera)
     setmetatable(result, self)
     return result
 end
 
 function TPChController:start()
-
+    if self.cameraController ~= nil then
+        self.cameraController:start()
+    end
 end
 
 function TPChController:update()
+    if self.cameraController ~= nil then
+        self.cameraController:update()
+    end
     self:update_movement()
     self:update_rotation()
 end
 
 function TPChController:destroy()
-
+    if self.cameraController ~= nil then
+        self.cameraController:destroy()
+    end
 end

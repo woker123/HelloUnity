@@ -57,7 +57,7 @@ public class TPCameraRotation : MonoBehaviour
             Ray ray = new Ray(tpCameraPivot.transform.position, tpCamera.transform.position - tpCameraPivot.transform.position);
             RaycastHit hitResult;
             bool isCollided = Physics.Raycast(ray, out hitResult, Mathf.Infinity);
-            if(isCollided && hitResult.collider.name != "TPCharactor")
+            if(isCollided && hitResult.collider.name != "TPCharacter")
             {
                 float angle = Vector3.Angle(hitResult.normal, -ray.direction);
                 float verticalBias = 0.1f;
