@@ -1,0 +1,12 @@
+--------------------------------Unity对象别名-----------------------------
+UnityEngine = CS.UnityEngine
+Debug = CS.UnityEngine.Debug
+Log = Debug.Log
+LogError = Debug.LogError
+Vector3 = UnityEngine.Vector3
+GameObject = UnityEngine.GameObject
+Time = UnityEngine.Time
+Input = UnityEngine.Input
+Vector2 = UnityEngine.Vector2
+Mathf = UnityEngine.Mathf
+---------------------------------------------------------------------------

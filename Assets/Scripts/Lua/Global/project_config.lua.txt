@@ -1,0 +1,4 @@
+TP_CHARACTER_NAME = "TPCharacter"
+TP_CAMERA_PIVOT_NAME = "TPCameraPivot"
+TP_CAMERA_NAME = "TPCamera"
+TP_CHARACTER_MESH_NAME = "BasicMotionsDummy"

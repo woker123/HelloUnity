@@ -1,15 +1,5 @@
---------------------------------Unity对象别名-----------------------------
-local UnityEngine = CS.UnityEngine
-local Debug = CS.UnityEngine.Debug
-local Log = Debug.Log
-local LogError = Debug.LogError
-local Vector3 = UnityEngine.Vector3
-local GameObject = UnityEngine.GameObject
-local Time = UnityEngine.Time
-local Input = UnityEngine.Input
-local Vector2 = UnityEngine.Vector2
-local Mathf = UnityEngine.Mathf
----------------------------------------------------------------------------
+require "utility"
+require "project_config"
 
 --------------------------------公共接口----------------------------------
 TPCameraController = {
@@ -54,7 +44,7 @@ function TPCameraController:update_collision_bias()
                 self.tpCamera.transform.position - self.tpCameraPivot.transform.position)
         local isCollided, hitResult = UnityEngine.Physics.Raycast(ray, nil, Mathf.Infinity)
         Log(isCollided)
-        if isCollided and hitResult.collider.name ~= "TPCharacter" then
+        if isCollided and hitResult.collider.name ~= TP_CHARACTER_NAME then
             local angle = Vector3.Angle(hitResult.normal, -ray.direction)
             local verticalBias = 0.1
             local directBias = 0.0

@@ -1,17 +1,6 @@
---------------------------------Unity对象别名---------------------------------
-local UnityEngine = CS.UnityEngine
-local Debug = CS.UnityEngine.Debug
-local Log = Debug.Log
-local LogError = Debug.LogError
-local Vector3 = UnityEngine.Vector3
-local GameObject = UnityEngine.GameObject
-local Time = UnityEngine.Time
-local Input = UnityEngine.Input
-local Vector2 = UnityEngine.Vector2
-local Mathf = UnityEngine.Mathf
----------------------------------------------------------------------------
-
 require "tp_camera_controller"
+require "utility"
+require "project_config"
 
 --------------------------------模块接口------------------------------------
 TPChController = {

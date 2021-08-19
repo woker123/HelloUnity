@@ -1,36 +1,31 @@
 gameplay_module = {}
 
 require "tp_character_controller"
-
---another name of unity classes
-local UnityEngine = CS.UnityEngine
-local Debug = UnityEngine.Debug
-local GameObject = UnityEngine.GameObject
-local LogError = Debug.LogError
-local Log = Debug.Log
+require "utility"
+require "project_config"
 
 local gameObjs = {}
 local tpChController = {}
 
 local function findGameObjects()
-    gameObjs.tpCharacter = CS.UnityEngine.GameObject.Find("TPCharacter")
+    gameObjs.tpCharacter = CS.UnityEngine.GameObject.Find(TP_CHARACTER_NAME)
     if gameObjs.tpCharacter == nil then
-        LogError("can not find GameOjbect: ".."\"TPCharacter\"")
+        LogError("can not find GameOjbect: ".."\""..TP_CHARACTER_NAME.."\"")
     end
 
-    gameObjs.tpCameraPivot = CS.UnityEngine.GameObject.Find("TPCameraPivot")
+    gameObjs.tpCameraPivot = CS.UnityEngine.GameObject.Find(TP_CAMERA_PIVOT_NAME)
     if gameObjs.tpCameraPivot == nil then
-        LogError("can not find GameOjbect: ".."\"TPCameraPivot\"")
+        LogError("can not find GameOjbect: ".."\""..TP_CAMERA_PIVOT_NAME.."\"")
     end
 
-    gameObjs.tpCamera = CS.UnityEngine.GameObject.Find("TPCamera")
+    gameObjs.tpCamera = CS.UnityEngine.GameObject.Find(TP_CAMERA_NAME)
     if gameObjs.tpCamera == nil then
-        LogError("can not find GameOjbect: ".."\"TPCamera\"")
+        LogError("can not find GameOjbect: ".."\""..TP_CAMERA_NAME.."\"")
     end
 
-    gameObjs.tpChMesh = CS.UnityEngine.GameObject.Find("BasicMotionsDummy")
+    gameObjs.tpChMesh = CS.UnityEngine.GameObject.Find(TP_CHARACTER_MESH_NAME)
     if gameObjs.tpChMesh == nil then
-        LogError("can not find GameOjbect: ".."\"BasicMotionsDummy\"")
+        LogError("can not find GameOjbect: ".."\""..TP_CHARACTER_MESH_NAME.."\"")
     end
 end
 

@@ -2086,7 +2086,7 @@ PrefabInstance:
     - target: {fileID: 8583011368409547876, guid: f254a9b1bb9513149863e6c0887d7d41,
         type: 3}
       propertyPath: m_Name
-      value: TPCharactor
+      value: TPCharacter2
       objectReference: {fileID: 0}
     - target: {fileID: 8583011368409547877, guid: f254a9b1bb9513149863e6c0887d7d41,
         type: 3}
