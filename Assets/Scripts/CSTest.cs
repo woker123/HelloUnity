@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class CSLifetime : MonoBehaviour
+public class CSTest : MonoBehaviour
 {
     // Start is called before the first frame update
     void Start()
@@ -10,14 +10,10 @@ public class CSLifetime : MonoBehaviour
         
     }
 
-    void Awake()
-    {
-        Debug.Log("awake");
-    }
-
     // Update is called once per frame
     void Update()
     {
-        
+
     }
+
 }

@@ -30,6 +30,10 @@ function update()
     gameplay_module:update()
 end
 
+function fixed_update()
+    gameplay_module:fixed_update()
+end
+
 function ondestroy()
     gameplay_module:ondestroy()
 end

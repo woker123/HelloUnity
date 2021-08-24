@@ -46,6 +46,10 @@ function gameplay_module:update()
     tpChController:update()
 end
 
+function gameplay_module:fixed_update()
+    tpChController:fixed_update()
+end
+
 --ondestroy
 function gameplay_module:ondestroy()
     tpChController:destroy()

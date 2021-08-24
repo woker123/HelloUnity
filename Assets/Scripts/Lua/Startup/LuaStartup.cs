@@ -16,7 +16,8 @@ public class LuaStartup : MonoBehaviour
     private LuaTable scriptEnv;
     private Action luaStart;
     private Action LuaUpdate;
-    private Action luaOnDestroy;
+    private Action luaFixedUpdate;
+    private Action luaOnDestroy;   
 
     void Awake()
     {
@@ -33,7 +34,8 @@ public class LuaStartup : MonoBehaviour
         scriptEnv.Get("start", out luaStart);
         scriptEnv.Get("update", out LuaUpdate);
         scriptEnv.Get("ondestroy", out luaOnDestroy);
-        
+        scriptEnv.Get("fixed_update", out luaFixedUpdate);
+
         if(luaAwake != null)
         {
             luaAwake();
@@ -58,6 +60,14 @@ public class LuaStartup : MonoBehaviour
         {
             luaEnv.Tick();
             lastGCTime = Time.time;
+        }
+    }
+
+    void FixedUpdate()
+    {
+        if(luaFixedUpdate != null)
+        {
+            luaFixedUpdate();
         }
     }
 

@@ -14,7 +14,7 @@ TPChController = {
     currentPosition = Vector3(),
     currentYSpeed = 0.0,
     movementSpeed = 15.0,
-    cameraController = nil
+    cameraController = nil,
 }
 TPChController.__index = TPChController
 -----------------------------------------------------------------------------
@@ -56,6 +56,12 @@ function TPChController:update_rotation()
     self.characterMesh.transform:Rotate(Vector3(0, deltaAngle * Time.deltaTime * self.rotationLerpSpeed, 0))
 end
 
+function TPChController:update_animator_param()
+    local anim = self.characterMesh:GetComponent(typeof(UnityEngine.Animator))
+    if anim ~= nil then
+        anim:SetFloat("Speed", self.moveController.velocity.magnitude)
+    end
+end
 -----------------------------------------------------------------------------
 
 -------------------------------Public成员函数-------------------------------
@@ -88,6 +94,10 @@ function TPChController:update()
     end
     self:update_movement()
     self:update_rotation()
+    self:update_animator_param()
+end
+
+function TPChController:fixed_update()
 end
 
 function TPChController:destroy()

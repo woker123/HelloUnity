@@ -37,13 +37,11 @@ function TPCameraController:update_rotation()
     end
 end
 
---未完成Raycast函数无法正确调用
 function TPCameraController:update_collision_bias()
     if self.tpCameraPivot ~= nil and self.tpCamera ~= nil then
         local ray = UnityEngine.Ray(self.tpCameraPivot.transform.position,
                 self.tpCamera.transform.position - self.tpCameraPivot.transform.position)
-        local isCollided, hitResult = UnityEngine.Physics.Raycast(ray, nil, Mathf.Infinity)
-        Log(isCollided)
+        local isCollided, hitResult = CS.CustomFuncs.Raycast(ray, nil,  Mathf.Infinity)
         if isCollided and hitResult.collider.name ~= TP_CHARACTER_NAME then
             local angle = Vector3.Angle(hitResult.normal, -ray.direction)
             local verticalBias = 0.1
@@ -84,8 +82,7 @@ end
 
 function TPCameraController:update()
     self:update_rotation()
-    --Camera bias未完成
-    --self:update_collision_bias()
+    self:update_collision_bias()
 end
 
 function TPCameraController:destroy()
