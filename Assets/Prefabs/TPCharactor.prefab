@@ -123,7 +123,6 @@ GameObject:
   m_Component:
   - component: {fileID: 8583011368409547877}
   - component: {fileID: 8583011368409547883}
-  - component: {fileID: 8583011368409547882}
   m_Layer: 0
   m_Name: TPCharactor
   m_TagString: Untagged
@@ -165,19 +164,6 @@ CharacterController:
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
   m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &8583011368409547882
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8583011368409547876}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bb09829743fc2144d9bcf1aea9201ca9, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  movementSpeed: 15
 --- !u!1 &8583011368736648583
 GameObject:
   m_ObjectHideFlags: 0
@@ -187,7 +173,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 8583011368736648580}
-  - component: {fileID: 8583011368736648581}
   m_Layer: 0
   m_Name: CameraPivot
   m_TagString: Untagged
@@ -210,19 +195,6 @@ Transform:
   m_Father: {fileID: 8583011368409547877}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &8583011368736648581
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8583011368736648583}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7ac9464ea4e25f04394ad5de0c91e1de, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  turnSpeed: 1500
 --- !u!1001 &8583011367960826615
 PrefabInstance:
   m_ObjectHideFlags: 0
