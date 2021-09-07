@@ -8,7 +8,9 @@ public class ClearMissingScriptUI : EditorWindow
 {
     public static void ShowUI()
     {
-        var window = (ClearMissingScriptUI)EditorWindow.GetWindowWithRect(typeof(ClearMissingScriptUI), new Rect(0, 0, 200, 150), false, "SceneTool");
+        var window = (ClearMissingScriptUI)EditorWindow.GetWindow(typeof(ClearMissingScriptUI), false, "SceneTool");
+        window.minSize = new Vector2(500, 300);
+        //window.maxSize = new Vector2(800, 500);
         window.Show();
     }
 
@@ -18,27 +20,62 @@ public class ClearMissingScriptUI : EditorWindow
         ShowUI();
     }
 
-    int clearNumInScene = 0;
-    int clearNumInPrefab = 0;
+    string[] paths;
     void OnGUI()
     {
-        if(GUI.Button(new Rect(0, 0, this.position.width, 20), "清除场景Missing script组件"))
-        {
-            int clearNum =  ClearMissingScript();
-            clearNumInScene = clearNum > 0 ?  clearNum  : clearNumInScene;    
-        }
-        GUI.Label(new Rect(0, 20, this.position.width, 20), string.Format("上次清除组件数目:{0}", clearNumInScene));
+        ClearMissingScriptInSceneView();
 
-        if(GUI.Button(new Rect(0, 40, this.position.width, 20), "清除Prefab Missing script组件"))
+        if (GUI.Button(new Rect(0, 2 * 20, this.position.width, 20), "扫描所有具有Missing Script的Prefab"))
         {
-            int clearNum = ClearPrefabMissingScript();
-            clearNumInPrefab = clearNum > 0 ? clearNum : clearNumInPrefab;
+            paths = FindPrefabWithMissingScript();
         }
-        GUI.Label(new Rect(0, 60, this.position.width, 20), string.Format("上次清除组件数目:{0}", clearNumInPrefab));
+        ScrollView(new Rect(0, 3 * 20, this.position.width, this.position.height - 3 * 20), paths);
     }
 
-    //In current scene
-    static int ClearMissingScript()
+    int clearNumInScene = 0;
+    void ClearMissingScriptInSceneView()
+    {
+        GUI.Label(new Rect(0, 0 * 20, this.position.width, 20), string.Format("上次清除组件数目:{0}", clearNumInScene));
+        if (GUI.Button(new Rect(0, 1 * 20, this.position.width, 20), "清除场景中的Missing script组件"))
+        {
+            int clearNum = ClearMissingScriptInCurrentScene();
+            clearNumInScene = clearNum > 0 ? clearNum : clearNumInScene;
+        }
+    }
+
+    Vector2 scrollPos = new Vector2(0, 0);
+    void ScrollView(Rect outterPos, string[] paths)
+    {
+        int perItemHeight = 20;
+        float textMaxWidth = 0;
+        int buttonWidth = 120;
+
+        if (paths == null) paths = new string[0];
+        foreach (var str in paths)
+        {
+            var w = GUI.skin.textArea.CalcSize(new GUIContent(str)).x;
+            if (w > textMaxWidth)
+                textMaxWidth = w;
+        }
+
+        var svWidth = textMaxWidth + buttonWidth;
+        var svInnerPos = new Rect(outterPos.x, outterPos.y, svWidth, perItemHeight * paths.Length);
+        scrollPos = GUI.BeginScrollView(outterPos, scrollPos, svInnerPos, true, true);
+        for (int i = 0; i < paths.Length; ++i)
+        {
+            if (GUI.Button(new Rect(svInnerPos.x, svInnerPos.y + i * perItemHeight, buttonWidth, perItemHeight), "定位到Project视图"))
+            {
+                var gameObj = AssetDatabase.LoadAssetAtPath<GameObject>(paths[i]);
+                EditorGUIUtility.PingObject(gameObj);
+            }
+            GUI.TextField(new Rect(svInnerPos.x + buttonWidth, svInnerPos.y + i * perItemHeight, textMaxWidth, perItemHeight), paths[i]);
+        }
+
+        GUI.EndScrollView();
+    }
+
+    //only in current scene
+    static int ClearMissingScriptInCurrentScene()
     {
         var curScene = EditorSceneManager.GetActiveScene();
         var scenePath = AssetDatabase.GetActiveScenePath();
@@ -55,7 +92,7 @@ public class ClearMissingScriptUI : EditorWindow
         }
 
         int clearNum = 0;
-        foreach(var gameObj in totalObj)
+        foreach (var gameObj in totalObj)
         {
             int num = GameObjectUtility.RemoveMonoBehavioursWithMissingScript(gameObj);
             clearNum += num;
@@ -64,36 +101,29 @@ public class ClearMissingScriptUI : EditorWindow
         return clearNum;
     }
 
-    //In all prefab
-    static int ClearPrefabMissingScript()
+    string[] FindPrefabWithMissingScript()
     {
-        int clearNum = 0;
         var prefabGUIDs = AssetDatabase.FindAssets("t:prefab");
-        foreach(var prefabGUID in prefabGUIDs)
+        List<string> resultPaths = new List<string>();
+        foreach (var prefabGUID in prefabGUIDs)
         {
             var prefabPath = AssetDatabase.GUIDToAssetPath(prefabGUID);
             var prefabObj = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
-            var gameObj = (GameObject)PrefabUtility.InstantiatePrefab(prefabObj);
-            var comps = gameObj.transform.GetComponentsInChildren<Transform>(true);
-            bool dirty = false;
-            foreach(var comp in comps)
+            var comps = prefabObj.transform.GetComponentsInChildren<Transform>();
+            foreach (var comp in comps)
             {
-                int cNum = GameObjectUtility.RemoveMonoBehavioursWithMissingScript(comp.gameObject);
-                if(cNum > 0)
+                //阻止嵌套检查
+                if (!PrefabUtility.IsPartOfPrefabInstance(comp.gameObject))
                 {
-                    clearNum += cNum;
-                    dirty = true;
+                    int num = GameObjectUtility.GetMonoBehavioursWithMissingScriptCount(comp.gameObject);
+                    if (num > 0)
+                    {
+                        resultPaths.Add(prefabPath);
+                        break;
+                    }
                 }
             }
-            if(dirty)
-            {
-                PrefabUtility.SaveAsPrefabAsset(gameObj, prefabPath);
-            }
-            
-            GameObject.DestroyImmediate(gameObj);
         }
-
-        return clearNum;
+        return resultPaths.ToArray();
     }
-
 }
