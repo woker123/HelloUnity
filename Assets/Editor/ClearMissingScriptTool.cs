@@ -6,13 +6,15 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine.SceneManagement;
 
+//TODO: BUG 搜寻场景过程中点击“定位按钮”会立马出现null reference错误
 public class SceneFinder
 {
     static List<string> m_totalScenePaths = new List<string>();
     static List<Tuple<string, List<string>>> m_taskResult = new List<Tuple<string, List<string>>>();
     static int m_totalSceneNum = 0;
     static int m_currentTaskIndex = 0;
-    static bool m_isInTask = false;
+    public static bool m_isInTask = false;
+    static bool m_isFirstInTask = true;
     static string m_tempScenePath;
 
     public static string GetGameObjectInheritPath(GameObject gameObject)
@@ -41,6 +43,7 @@ public class SceneFinder
         m_totalSceneNum = m_totalScenePaths.Count;
         m_currentTaskIndex = 0;
         m_isInTask = true;
+        m_isFirstInTask = true;
         m_tempScenePath = EditorSceneManager.GetActiveScene().path;
     }
 
@@ -59,35 +62,69 @@ public class SceneFinder
         return m_taskResult;
     }
 
+    static void EndTask()
+    {
+        m_isInTask = false;
+        EditorSceneManager.OpenScene(m_tempScenePath, OpenSceneMode.Single);
+    }
+
+
+    static List<GameObject> l_gameObjInScene = new List<GameObject>();
+    static List<string> l_completeObjPaths = new List<string>();
+    static int l_curIndex = 0;
+    static string l_curScenePath = "";
     public static void UpdateTask()
     {
         if (!m_isInTask)
             return;
 
-        var curScenePath = m_totalScenePaths[m_currentTaskIndex];
-        var curScene = EditorSceneManager.OpenScene(curScenePath, OpenSceneMode.Single);
-        var rootGameObjs = curScene.GetRootGameObjects();
-        List<string> findResultPaths = new List<string>();
-        foreach (var rootGameObj in rootGameObjs)
+        if (m_isFirstInTask)
         {
-            var comps = rootGameObj.GetComponentsInChildren<Transform>(true);
-            foreach (var comp in comps)
+            //加载场景后第一次执行
+            l_gameObjInScene = new List<GameObject>();
+            l_completeObjPaths = new List<string>();
+            l_curIndex = 0;
+            l_curScenePath = m_totalScenePaths[m_currentTaskIndex];
+            Scene curScene = new Scene();
+            bool isException = false;
+            curScene = EditorSceneManager.OpenScene(l_curScenePath, OpenSceneMode.Single);
+            GameObject[] rootGameObjs = new GameObject[0];
+            if(!isException)
             {
-                if (GameObjectUtility.GetMonoBehavioursWithMissingScriptCount(comp.gameObject) > 0)
+                rootGameObjs = curScene.GetRootGameObjects();
+            }
+            foreach (var rootGameObj in rootGameObjs)
+            {
+                var comps = rootGameObj.GetComponentsInChildren<Transform>(true);
+                foreach (var comp in comps)
                 {
-                    findResultPaths.Add(GetGameObjectInheritPath(comp.gameObject));
+                    l_gameObjInScene.Add(comp.gameObject);
                 }
+            }
+
+            m_isFirstInTask = false;
+        }
+        else
+        {
+            if (l_curIndex < l_gameObjInScene.Count)
+            {
+                var gameObj = l_gameObjInScene[l_curIndex];
+                if (GameObjectUtility.GetMonoBehavioursWithMissingScriptCount(gameObj) > 0)
+                    l_completeObjPaths.Add(GetGameObjectInheritPath(gameObj));
+                ++l_curIndex;
+            }
+            else
+            {
+                m_taskResult.Add(new Tuple<string, List<string>>(l_curScenePath, l_completeObjPaths));
+                ++m_currentTaskIndex;
+                m_isFirstInTask = true;
             }
         }
 
-        m_taskResult.Add(new Tuple<string, List<string>>(curScenePath, findResultPaths));
-        ++m_currentTaskIndex;
         if (m_currentTaskIndex >= m_totalSceneNum)
         {
-            m_isInTask = false;
-            EditorSceneManager.OpenScene(m_tempScenePath, OpenSceneMode.Single);
+            EndTask();
         }
-
     }
 
     public static void FindMissingScriptInAllScene()
@@ -107,7 +144,7 @@ public class ClearMissingScriptUI : EditorWindow
         window.Show();
     }
 
-    [MenuItem("Tools/清除Missing script组件")]
+    [MenuItem("Tools/查找Missing script组件")]
     static void ShowTool()
     {
         ShowUI();
@@ -137,34 +174,12 @@ public class ClearMissingScriptUI : EditorWindow
         this.Repaint();
     }
 
-    int clearNumInScene = 0;
-    void ClearMissingScriptInSceneViewUI()
-    {
-        GUI.Label(new Rect(0, 0 * 20, this.position.width, 20), string.Format("上次清除组件数目:{0}", clearNumInScene));
-        if (GUI.Button(new Rect(0, 1 * 20, this.position.width, 20), "清除场景中的Missing script组件"))
-        {
-            int clearNum = ClearMissingScriptInCurrentScene();
-            clearNumInScene = clearNum > 0 ? clearNum : clearNumInScene;
-        }
-    }
-
     Vector2 scrollPos2 = new Vector2(0, 0);
     void FindInSceneScrollBar(Rect outterPos, List<Tuple<string, List<string>>> items)
     {
         int perItemHeight = 20;
-        float textMaxWidth = 0;
+        float textMaxWidth = 2000;
         int buttonWidth = 180;
-
-        if (items == null) items = new List<Tuple<string, List<string>>>();
-        foreach (var item in items)
-        {
-            foreach (var obj in item.Item2)
-            {
-                var w = GUI.skin.textArea.CalcSize(new GUIContent(item.Item1 + obj)).x;
-                if (w > textMaxWidth)
-                    textMaxWidth = w;
-            }
-        }
 
         var svWidth = textMaxWidth + buttonWidth;
         int totalCount = 0;
@@ -178,11 +193,14 @@ public class ClearMissingScriptUI : EditorWindow
             {
                 if (GUI.Button(new Rect(svInnerPos.x, svInnerPos.y + counter * perItemHeight, buttonWidth, perItemHeight), "打开Scene并定位GameOjbect"))
                 {
-                    if (!EditorSceneManager.GetActiveScene().path.Equals(items[i].Item1))
-                        EditorSceneManager.OpenScene(items[i].Item1, OpenSceneMode.Single);
-                    var targetGameObj = GameObject.Find(items[i].Item2[j]);
-                    EditorGUIUtility.PingObject(targetGameObj);
-                    Selection.activeObject = targetGameObj;
+                    if (!SceneFinder.m_isInTask)
+                    {
+                        if (!EditorSceneManager.GetActiveScene().path.Equals(items[i].Item1))
+                            EditorSceneManager.OpenScene(items[i].Item1, OpenSceneMode.Single);
+                        var targetGameObj = GameObject.Find(items[i].Item2[j]);
+                        EditorGUIUtility.PingObject(targetGameObj);
+                        Selection.activeObject = targetGameObj;
+                    }
                 }
                 GUI.TextField(new Rect(svInnerPos.x + buttonWidth, svInnerPos.y + counter * perItemHeight, textMaxWidth, perItemHeight),
                     items[i].Item1 + items[i].Item2[j]);
@@ -198,16 +216,9 @@ public class ClearMissingScriptUI : EditorWindow
     void PinToProjectViewScrollBar(Rect outterPos, string[] paths)
     {
         int perItemHeight = 20;
-        float textMaxWidth = 0;
+        float textMaxWidth = 2000;
         int buttonWidth = 120;
 
-        if (paths == null) paths = new string[0];
-        foreach (var str in paths)
-        {
-            var w = GUI.skin.textArea.CalcSize(new GUIContent(str)).x;
-            if (w > textMaxWidth)
-                textMaxWidth = w;
-        }
 
         var svWidth = textMaxWidth + buttonWidth;
         var svInnerPos = new Rect(outterPos.x, outterPos.y, svWidth, perItemHeight * paths.Length);
@@ -224,33 +235,6 @@ public class ClearMissingScriptUI : EditorWindow
         }
 
         GUI.EndScrollView();
-    }
-
-    //only in current scene
-    static int ClearMissingScriptInCurrentScene()
-    {
-        var curScene = EditorSceneManager.GetActiveScene();
-        var scenePath = AssetDatabase.GetActiveScenePath();
-        var rootGameObjs = curScene.GetRootGameObjects();
-        List<GameObject> totalObj = new List<GameObject>();
-
-        foreach (var gameObj in rootGameObjs)
-        {
-            var comps = gameObj.transform.GetComponentsInChildren<Transform>(true);
-            foreach (var comp in comps)
-            {
-                totalObj.Add(comp.gameObject);
-            }
-        }
-
-        int clearNum = 0;
-        foreach (var gameObj in totalObj)
-        {
-            int num = GameObjectUtility.RemoveMonoBehavioursWithMissingScript(gameObj);
-            clearNum += num;
-        }
-        UnityEditor.SceneManagement.EditorSceneManager.SaveScene(curScene, scenePath);
-        return clearNum;
     }
 
     /***
