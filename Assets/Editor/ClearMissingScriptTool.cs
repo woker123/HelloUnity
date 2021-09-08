@@ -4,20 +4,86 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 using UnityEditor.SceneManagement;
-using UnityEngine.SceneManagement;
 
-//TODO: BUG 搜寻场景过程中点击“定位按钮”会立马出现null reference错误
 public class SceneFinder
 {
-    static List<string> m_totalScenePaths = new List<string>();
-    static List<Tuple<string, List<string>>> m_taskResult = new List<Tuple<string, List<string>>>();
-    static int m_totalSceneNum = 0;
-    static int m_currentTaskIndex = 0;
-    public static bool m_isInTask = false;
-    static bool m_isFirstInTask = true;
-    static string m_tempScenePath;
+    static List<GameObject> m_totalTask = new List<GameObject>();
+    static List<string> m_compleledTask = new List<string>();
+    static int m_currentTaskIndex;
+    static bool m_isInTask;
+    static string m_scenePathInTask = "";
 
-    public static string GetGameObjectInheritPath(GameObject gameObject)
+    public static void ClossingSceneCb(UnityEngine.SceneManagement.Scene scene, bool removingScene)
+    {
+        if (scene.path == m_scenePathInTask)
+        {
+            ClearTask();
+        }
+    }
+
+    public static void BeginTask()
+    {
+        var curScene = EditorSceneManager.GetActiveScene();
+        if (curScene == null) return;
+
+        m_totalTask = new List<GameObject>();
+        m_compleledTask = new List<string>();
+        m_currentTaskIndex = 0;
+        m_isInTask = true;
+        m_scenePathInTask = curScene.path;
+        var rootGameObjs = curScene.GetRootGameObjects();
+        foreach (var rootGameObj in rootGameObjs)
+        {
+            var comps = rootGameObj.GetComponentsInChildren<Transform>(true);
+            foreach (var comp in comps)
+            {
+                m_totalTask.Add(comp.gameObject);
+            }
+        }
+    }
+
+    public static void UpdateTask()
+    {
+        if (!m_isInTask)
+            return;
+
+        if (m_currentTaskIndex < m_totalTask.Count)
+        {
+            var gameObj = m_totalTask[m_currentTaskIndex];
+            if (gameObj != null)
+            {
+                if (GameObjectUtility.GetMonoBehavioursWithMissingScriptCount(gameObj) > 0)
+                    m_compleledTask.Add(GetGameObjInheritPath(gameObj));
+                ++m_currentTaskIndex;
+            }
+        }
+        else
+        {
+            EndTask();
+        }
+    }
+
+    public static int GetTaskNum()
+    {
+        return m_totalTask.Count;
+    }
+
+    public static int GetCurTaskIndex()
+    {
+        return m_currentTaskIndex;
+    }
+
+    public static List<string> GetCompletedTask()
+    {
+        return m_compleledTask;
+    }
+
+    public static string GetTaskScenePath()
+    {
+        return m_scenePathInTask;
+    }
+
+    static string GetGameObjInheritPath(GameObject gameObject)
     {
         var gameObj = gameObject;
         string path = "/" + gameObj.name;
@@ -30,118 +96,30 @@ public class SceneFinder
         return path;
     }
 
-    static void ResetTask()
+    static void ClearTask()
     {
-        var sceneGUIDs = AssetDatabase.FindAssets("t:scene");
-        m_totalScenePaths.Clear();
-        foreach (var sceneGUID in sceneGUIDs)
-        {
-            m_totalScenePaths.Add(AssetDatabase.GUIDToAssetPath(sceneGUID));
-        }
-
-        m_taskResult.Clear();
-        m_totalSceneNum = m_totalScenePaths.Count;
+        m_totalTask = new List<GameObject>();
+        m_compleledTask = new List<string>();
         m_currentTaskIndex = 0;
-        m_isInTask = true;
-        m_isFirstInTask = true;
-        m_tempScenePath = EditorSceneManager.GetActiveScene().path;
-    }
-
-    public static int GetCurrentTaskIndex()
-    {
-        return m_currentTaskIndex;
-    }
-
-    public static int GetTotalTaskNum()
-    {
-        return m_totalSceneNum;
-    }
-
-    public static List<Tuple<string, List<string>>> GetTaskResult()
-    {
-        return m_taskResult;
+        m_isInTask = false;
+        m_scenePathInTask = "";
     }
 
     static void EndTask()
     {
         m_isInTask = false;
-        EditorSceneManager.OpenScene(m_tempScenePath, OpenSceneMode.Single);
     }
-
-
-    static List<GameObject> l_gameObjInScene = new List<GameObject>();
-    static List<string> l_completeObjPaths = new List<string>();
-    static int l_curIndex = 0;
-    static string l_curScenePath = "";
-    public static void UpdateTask()
-    {
-        if (!m_isInTask)
-            return;
-
-        if (m_isFirstInTask)
-        {
-            //加载场景后第一次执行
-            l_gameObjInScene = new List<GameObject>();
-            l_completeObjPaths = new List<string>();
-            l_curIndex = 0;
-            l_curScenePath = m_totalScenePaths[m_currentTaskIndex];
-            Scene curScene = new Scene();
-            bool isException = false;
-            curScene = EditorSceneManager.OpenScene(l_curScenePath, OpenSceneMode.Single);
-            GameObject[] rootGameObjs = new GameObject[0];
-            if(!isException)
-            {
-                rootGameObjs = curScene.GetRootGameObjects();
-            }
-            foreach (var rootGameObj in rootGameObjs)
-            {
-                var comps = rootGameObj.GetComponentsInChildren<Transform>(true);
-                foreach (var comp in comps)
-                {
-                    l_gameObjInScene.Add(comp.gameObject);
-                }
-            }
-
-            m_isFirstInTask = false;
-        }
-        else
-        {
-            if (l_curIndex < l_gameObjInScene.Count)
-            {
-                var gameObj = l_gameObjInScene[l_curIndex];
-                if (GameObjectUtility.GetMonoBehavioursWithMissingScriptCount(gameObj) > 0)
-                    l_completeObjPaths.Add(GetGameObjectInheritPath(gameObj));
-                ++l_curIndex;
-            }
-            else
-            {
-                m_taskResult.Add(new Tuple<string, List<string>>(l_curScenePath, l_completeObjPaths));
-                ++m_currentTaskIndex;
-                m_isFirstInTask = true;
-            }
-        }
-
-        if (m_currentTaskIndex >= m_totalSceneNum)
-        {
-            EndTask();
-        }
-    }
-
-    public static void FindMissingScriptInAllScene()
-    {
-        ResetTask();
-    }
-
 }
 
 public class ClearMissingScriptUI : EditorWindow
 {
     public static void ShowUI()
     {
-        var window = (ClearMissingScriptUI)EditorWindow.GetWindow(typeof(ClearMissingScriptUI), false, "SceneTool");
-        window.minSize = new Vector2(500, 600);
-        //window.maxSize = new Vector2(800, 500);
+        var window = (ClearMissingScriptUI)EditorWindow.GetWindow(typeof(ClearMissingScriptUI), false, "MissingScriptTool");
+        window.minSize = new Vector2(200, 200);
+        window.position = new Rect(0, 0, 800, 600);
         window.Show();
+        EditorSceneManager.sceneClosing  += SceneFinder.ClossingSceneCb;
     }
 
     [MenuItem("Tools/查找Missing script组件")]
@@ -152,68 +130,57 @@ public class ClearMissingScriptUI : EditorWindow
 
     void OnGUI()
     {
-        if (GUI.Button(new Rect(0, 0 * 20, this.position.width, 20), string.Format("扫描所有场景中的Missing script组件(注意保存当前场景)--{0}/{1}",
-                SceneFinder.GetCurrentTaskIndex(), SceneFinder.GetTotalTaskNum())))
+        if(GUI.Button(new Rect(0, 0 * 20, this.position.width, 20), string.Format("查找当前场景中的Missing script组件--{0}/{1}",
+                SceneFinder.GetCurTaskIndex(), SceneFinder.GetTaskNum())))
         {
-            SceneFinder.FindMissingScriptInAllScene();
+            SceneFinder.BeginTask();
         }
         SceneFinder.UpdateTask();
-        FindInSceneScrollBar(new Rect(0, 1 * 20, this.position.width, this.position.height / 2 - 1 * 20), SceneFinder.GetTaskResult());
+        FindInSceneScrollBar(new Rect(0, 1 * 20, this.position.width, this.position.height / 2 - 1 * 20), SceneFinder.GetCompletedTask());
 
 
         /**********************************************************************************************/
         int denum = currentIndexFlag < pathNumNeedCheck ? currentIndexFlag + 1 : pathNumNeedCheck;
         if (GUI.Button(new Rect(0, this.position.height / 2, this.position.width, 20),
-                "扫描所有具有Missing Script的Prefab--" + string.Format("{0}/{1}", denum, pathNumNeedCheck)))
+                "在所有Prefab中查找具有Missing Script的组件--" + string.Format("{0}/{1}", denum, pathNumNeedCheck)))
         {
             FindPrefabMissingScript();
         }
         UpdateTaskMissingScriptFinding();
-        PinToProjectViewScrollBar(new Rect(0, this.position.height / 2 + 20, this.position.width, this.position.height / 2 - 1 * 20), targetPaths.ToArray());
+        FindInProjectViewScrollBar(new Rect(0, this.position.height / 2 + 20, this.position.width, this.position.height / 2 - 1 * 20), targetPaths.ToArray());
 
         this.Repaint();
     }
 
     Vector2 scrollPos2 = new Vector2(0, 0);
-    void FindInSceneScrollBar(Rect outterPos, List<Tuple<string, List<string>>> items)
+    void FindInSceneScrollBar(Rect outterPos, List<string> paths)
     {
         int perItemHeight = 20;
         float textMaxWidth = 2000;
-        int buttonWidth = 180;
+        int buttonWidth = 120;
 
         var svWidth = textMaxWidth + buttonWidth;
-        int totalCount = 0;
-        foreach (var item in items) totalCount += item.Item2.Count;
-        var svInnerPos = new Rect(outterPos.x, outterPos.y, svWidth, perItemHeight * totalCount);
-        scrollPos2 = GUI.BeginScrollView(outterPos, scrollPos2, svInnerPos, true, true);
-        int counter = 0;
-        for (int i = 0; i < items.Count; ++i)
-        {
-            for (int j = 0; j < items[i].Item2.Count; ++j)
-            {
-                if (GUI.Button(new Rect(svInnerPos.x, svInnerPos.y + counter * perItemHeight, buttonWidth, perItemHeight), "打开Scene并定位GameOjbect"))
-                {
-                    if (!SceneFinder.m_isInTask)
-                    {
-                        if (!EditorSceneManager.GetActiveScene().path.Equals(items[i].Item1))
-                            EditorSceneManager.OpenScene(items[i].Item1, OpenSceneMode.Single);
-                        var targetGameObj = GameObject.Find(items[i].Item2[j]);
-                        EditorGUIUtility.PingObject(targetGameObj);
-                        Selection.activeObject = targetGameObj;
-                    }
-                }
-                GUI.TextField(new Rect(svInnerPos.x + buttonWidth, svInnerPos.y + counter * perItemHeight, textMaxWidth, perItemHeight),
-                    items[i].Item1 + items[i].Item2[j]);
-                ++counter;
-            }
 
+        var svInnerPos = new Rect(outterPos.x, outterPos.y, svWidth, perItemHeight * paths.Count);
+        scrollPos2 = GUI.BeginScrollView(outterPos, scrollPos2, svInnerPos, true, true);
+        for (int i = 0; i < paths.Count; ++i)
+        {
+            if (GUI.Button(new Rect(svInnerPos.x, svInnerPos.y + i * perItemHeight, buttonWidth, perItemHeight), "定位GameOjbect"))
+            {
+                var targetGameObj = GameObject.Find(paths[i]);
+                EditorGUIUtility.PingObject(targetGameObj);
+                Selection.activeObject = targetGameObj;
+                EditorApplication.ExecuteMenuItem("Edit/Lock View to Selected");
+            }
+            GUI.TextField(new Rect(svInnerPos.x + buttonWidth, svInnerPos.y + i * perItemHeight, textMaxWidth, perItemHeight),
+                SceneFinder.GetTaskScenePath() + ": " + paths[i]);
         }
 
         GUI.EndScrollView();
     }
 
     Vector2 scrollPos = new Vector2(0, 0);
-    void PinToProjectViewScrollBar(Rect outterPos, string[] paths)
+    void FindInProjectViewScrollBar(Rect outterPos, string[] paths)
     {
         int perItemHeight = 20;
         float textMaxWidth = 2000;
