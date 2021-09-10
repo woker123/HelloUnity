@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
+using CustomGUI;
 
 public class UILayoutTest : EditorWindow 
 {   
@@ -16,6 +17,16 @@ public class UILayoutTest : EditorWindow
 
     private void OnGUI() 
     {
-        GUILayout.Button("click me");
+        string[] items = new string[100];
+        for(int i = 0; i < items.Length; ++i)
+        {
+            string temp = i + ": ";
+            for(int j = 0; j < 100; ++j)
+                items[i] = temp += "-" + j;
+        }
+        GUILayout.BeginVertical(); 
+        TextItemScrollArea.Draw(new Rect(100, 0, 400, 300), items);
+        GUILayout.EndVertical();
     }
+
 }

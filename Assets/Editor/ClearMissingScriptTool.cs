@@ -9,6 +9,7 @@ public class SceneFinder
 {
     static List<GameObject> m_totalTask = new List<GameObject>();
     static List<string> m_compleledTask = new List<string>();
+    static List<GameObject> m_completedGameOjbs = new List<GameObject>();
     static int m_currentTaskIndex;
     static bool m_isInTask;
     static string m_scenePathInTask = "";
@@ -28,13 +29,14 @@ public class SceneFinder
 
         m_totalTask = new List<GameObject>();
         m_compleledTask = new List<string>();
+        m_completedGameOjbs = new List<GameObject>();
         m_currentTaskIndex = 0;
         m_isInTask = true;
         m_scenePathInTask = curScene.path;
         var rootGameObjs = curScene.GetRootGameObjects();
         foreach (var rootGameObj in rootGameObjs)
         {
-            var comps = rootGameObj.GetComponentsInChildren<Transform>(true);
+            var comps = rootGameObj.GetComponentsInChildren<Transform>(false);
             foreach (var comp in comps)
             {
                 m_totalTask.Add(comp.gameObject);
@@ -53,13 +55,32 @@ public class SceneFinder
             if (gameObj != null)
             {
                 if (GameObjectUtility.GetMonoBehavioursWithMissingScriptCount(gameObj) > 0)
+                {
                     m_compleledTask.Add(GetGameObjInheritPath(gameObj));
+                    m_completedGameOjbs.Add(gameObj);
+                }     
                 ++m_currentTaskIndex;
             }
         }
         else
         {
             EndTask();
+        }
+    }
+
+    public static void ClearMissingScripts()
+    {
+        if(!m_isInTask)
+        {
+            foreach(var gameObj in m_completedGameOjbs)
+            {
+                if(gameObj != null)
+                    GameObjectUtility.RemoveMonoBehavioursWithMissingScript(gameObj);
+            }
+            m_compleledTask.Clear();
+            m_completedGameOjbs.Clear();
+            //EditorSceneManager.SaveScene(EditorSceneManager.GetActiveScene());
+            EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
         }
     }
 
@@ -78,9 +99,19 @@ public class SceneFinder
         return m_compleledTask;
     }
 
+    public static List<GameObject> GetCompletedGameObjs()
+    {
+        return m_completedGameOjbs;
+    }
+
     public static string GetTaskScenePath()
     {
         return m_scenePathInTask;
+    }
+
+    public static bool IsInTask()
+    {
+        return m_isInTask;
     }
 
     static string GetGameObjInheritPath(GameObject gameObject)
@@ -100,6 +131,7 @@ public class SceneFinder
     {
         m_totalTask = new List<GameObject>();
         m_compleledTask = new List<string>();
+        m_completedGameOjbs = new List<GameObject>();
         m_currentTaskIndex = 0;
         m_isInTask = false;
         m_scenePathInTask = "";
@@ -111,18 +143,18 @@ public class SceneFinder
     }
 }
 
-public class ClearMissingScriptUI : EditorWindow
+public class FindMissingScriptUI : EditorWindow
 {
     public static void ShowUI()
     {
-        var window = (ClearMissingScriptUI)EditorWindow.GetWindow(typeof(ClearMissingScriptUI), false, "MissingScriptTool");
+        var window = (FindMissingScriptUI)EditorWindow.GetWindow(typeof(FindMissingScriptUI), false, "MissingScriptTool");
         window.minSize = new Vector2(200, 200);
         window.position = new Rect(0, 0, 800, 600);
         window.Show();
         EditorSceneManager.sceneClosing  += SceneFinder.ClossingSceneCb;
     }
 
-    [MenuItem("Tools/查找Missing script组件")]
+    [MenuItem("Tools/资源检查工具/查找Missing script组件")]
     static void ShowTool()
     {
         ShowUI();
@@ -130,11 +162,19 @@ public class ClearMissingScriptUI : EditorWindow
 
     void OnGUI()
     {
-        if(GUI.Button(new Rect(0, 0 * 20, this.position.width, 20), string.Format("查找当前场景中的Missing script组件--{0}/{1}",
+        if(GUI.Button(new Rect(0, 0 * 20, this.position.width - 100, 20), string.Format("查找当前场景中的Missing script组件(仅启用的游戏对象)--{0}/{1}",
                 SceneFinder.GetCurTaskIndex(), SceneFinder.GetTaskNum())))
         {
             SceneFinder.BeginTask();
         }
+        
+        GUI.enabled = (!SceneFinder.IsInTask()) && (SceneFinder.GetCompletedGameObjs().Count > 0);
+        if(GUI.Button(new Rect(this.position.width - 100, 0 * 20, 100, 20), "清除全部"))
+        {
+            SceneFinder.ClearMissingScripts();
+        }
+        GUI.enabled = true;
+
         SceneFinder.UpdateTask();
         FindInSceneScrollBar(new Rect(0, 1 * 20, this.position.width, this.position.height / 2 - 1 * 20), SceneFinder.GetCompletedTask());
 
